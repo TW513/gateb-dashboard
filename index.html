@@ -1,0 +1,655 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Gate B 評価ツール（Dashboard）</title>
+  <style>
+    :root{--bg:#070a14;--card:#121a33;--muted:#93a4c7;--text:#eaf0ff;--line:#243057;--good:#22c55e;--warn:#f59e0b;--bad:#ef4444;--na:#64748b;}
+    *{box-sizing:border-box;font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Hiragino Kaku Gothic ProN", "Noto Sans JP", "Yu Gothic", sans-serif;}
+    body{margin:0;background:radial-gradient(1200px 600px at 20% -10%,rgba(96,165,250,.22),transparent 55%),radial-gradient(1000px 700px at 90% 0%,rgba(34,197,94,.18),transparent 55%),var(--bg);color:var(--text);}
+    header{padding:18px 18px;border-bottom:1px solid rgba(255,255,255,.08);position:sticky;top:0;background:rgba(7,10,20,.92);backdrop-filter: blur(10px);}
+    header h1{margin:0;font-size:18px;}
+    header p{margin:6px 0 0;color:var(--muted);font-size:12px;line-height:1.45;}
+    .wrap{max-width:1100px;margin:0 auto;padding:16px;}
+    .grid{display:grid;grid-template-columns: 1.15fr .85fr;gap:14px;align-items:start;}
+    @media (max-width: 980px){.grid{grid-template-columns:1fr;}}
+    .card{background:rgba(18,26,51,.92);border:1px solid rgba(255,255,255,.08);border-radius:16px;box-shadow:0 18px 45px rgba(0,0,0,.35);} 
+    .hd{padding:14px 14px 0;}
+    .hd h2{margin:0;font-size:14px;}
+    .bd{padding:14px;}
+    .row{display:grid;grid-template-columns: 1fr 1fr;gap:10px;}
+    @media (max-width: 560px){.row{grid-template-columns:1fr;}}
+    label{display:block;font-size:12px;color:var(--muted);margin:10px 0 6px;}
+    input,select{width:100%;padding:11px 12px;border-radius:12px;border:1px solid rgba(255,255,255,.10);background:rgba(5,8,16,.55);color:var(--text);outline:none;}
+    input:focus,select:focus{border-color: rgba(147,164,199,.6);}    
+    .pill{display:inline-flex;align-items:center;gap:8px;padding:7px 10px;border-radius:999px;font-size:12px;border:1px solid rgba(255,255,255,.10);background:rgba(5,8,16,.4);}
+    .dot{width:10px;height:10px;border-radius:999px;display:inline-block;background:var(--na);}
+    .good{background:var(--good)!important;} .warn{background:var(--warn)!important;} .bad{background:var(--bad)!important;} .na{background:var(--na)!important;}
+    .kpi{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;}
+    .kpi .box{padding:12px;border-radius:14px;border:1px solid rgba(255,255,255,.08);background:rgba(5,8,16,.35);} 
+    .big{font-size:26px;margin-top:2px;font-weight:700;}
+    .muted{color:var(--muted);font-size:12px;line-height:1.45;}
+    .scoregrid{display:grid;grid-template-columns:1fr;gap:10px;}
+    .score{padding:12px;border-radius:14px;border:1px solid rgba(255,255,255,.08);background:rgba(5,8,16,.35);} 
+    .score .top{display:flex;align-items:center;justify-content:space-between;gap:10px;}
+    .score .name{font-weight:650;}
+    .score .sub{margin-top:6px;color:var(--muted);font-size:12px;}
+    .list{margin:10px 0 0;padding-left:18px;color:var(--text);font-size:12px;line-height:1.5;}
+    .actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px;}
+    button{cursor:pointer;border:none;border-radius:12px;padding:10px 12px;color:var(--text);background:#2b3a6b;}
+    button.secondary{background:#1e2a52;}
+    details{border:1px dashed rgba(255,255,255,.18);border-radius:12px;padding:10px 12px;background:rgba(5,8,16,.25);}
+    details summary{cursor:pointer;color:var(--text);font-size:12px;}
+    details ul{margin:10px 0 0;padding-left:18px;color:var(--muted);font-size:12px;line-height:1.55;}
+    .headerbar{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap;}
+    .modes{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+    .modebtn{padding:8px 10px;border-radius:999px;font-size:12px;background:rgba(43,58,107,.85);border:1px solid rgba(255,255,255,.12);}
+    .modebtn.active{outline:2px solid rgba(96,165,250,.55);}
+    .linkbtn{padding:6px 10px;border-radius:999px;font-size:12px;background:rgba(30,42,82,.9);border:1px solid rgba(255,255,255,.10);}
+    .helpgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px;}
+    @media (max-width: 560px){.helpgrid{grid-template-columns:1fr;}}
+    .helpsec{padding:10px;border-radius:12px;border:1px solid rgba(255,255,255,.08);background:rgba(5,8,16,.35);}
+    .helpTitle{font-size:12px;font-weight:650;margin-bottom:6px;}
+    .helpsec ul{margin:8px 0 0;padding-left:18px;color:var(--muted);font-size:12px;line-height:1.55;}
+    .tiny{font-size:11px;color:var(--muted);}
+
+    /* Optional: force layout mode for testing */
+    body[data-mode="pc"] .grid{grid-template-columns: 1.15fr .85fr;}
+    body[data-mode="pc"] .row{grid-template-columns: 1fr 1fr;}
+    body[data-mode="mobile"] .grid{grid-template-columns:1fr;}
+    body[data-mode="mobile"] .row{grid-template-columns:1fr;}
+
+  </style>
+</head>
+<body>
+<header>
+  <div class="headerbar">
+    <div>
+      <h1>Gate B 評価ツール（Dashboard）</h1>
+      <p>入力すると結果がリアルタイム更新されます。各カードの「判定/測定ガイド」をクリックすると、判定ロジックとHow to measure（短縮版/完全版）が開きます。</p>
+    </div>
+    <div class="modes" aria-label="表示モード">
+      <span class="tiny">表示：</span>
+      <button class="modebtn" id="modeAuto" type="button">自動</button>
+      <button class="modebtn" id="modePC" type="button">PC</button>
+      <button class="modebtn" id="modeMobile" type="button">スマホ</button>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+  <div class="grid">
+    <!-- LEFT: Input -->
+    <section class="card" aria-label="入力">
+      <div class="hd"><h2>入力（Gate B）</h2></div>
+      <div class="bd">
+        <div class="row">
+          <div>
+            <label>性別（握力閾値に使用）</label>
+            <select id="sex"><option value="">選択…</option><option value="M">男性</option><option value="F">女性</option></select>
+          </div>
+          <div>
+            <label>社会的支援（総合）</label>
+            <select id="support"><option value="">選択…</option><option value="ok">支援成立</option><option value="ng">不成立</option></select>
+          </div>
+        </div>
+
+        <hr style="border:none;border-top:1px solid rgba(255,255,255,.08);margin:14px 0;" />
+
+        <div class="row">
+          <div>
+            <label>Katz ADL（0–6）</label>
+            <input id="katz" inputmode="numeric" placeholder="例：6" />
+          </div>
+          <div>
+            <label>Lawton ADL（0–8）</label>
+            <input id="lawton" inputmode="numeric" placeholder="例：7" />
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <label>握力（kg）</label>
+            <input id="grip" inputmode="decimal" placeholder="例：30" />
+            <div class="muted" style="margin-top:6px;">不合格：男&lt;28 / 女&lt;18</div>
+          </div>
+          <div>
+            <label>歩行速度（m/s）</label>
+            <input id="walk" inputmode="decimal" placeholder="例：1.1" />
+            <div class="muted" style="margin-top:6px;">不合格：&lt;1.0</div>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <label>TUG（秒）</label>
+            <input id="tug" inputmode="decimal" placeholder="例：10.5" />
+            <div class="muted" style="margin-top:6px;">不合格：≥12.0</div>
+          </div>
+          <div>
+            <label>Mini-Cog（0–5）</label>
+            <input id="minicog" inputmode="numeric" placeholder="例：4" />
+            <div class="muted" style="margin-top:6px;">不合格：≤2</div>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <label>GDS-15（0–15）</label>
+            <input id="gds" inputmode="numeric" placeholder="例：3" />
+            <div class="muted" style="margin-top:6px;">不合格：&gt;5</div>
+          </div>
+          <div>
+            <label>MNA-SF（0–14）</label>
+            <input id="mna" inputmode="numeric" placeholder="例：12" />
+            <div class="muted" style="margin-top:6px;">低栄養：≤7 / リスク：8–11</div>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <label>嚥下（MWST 0–5）</label>
+            <input id="mwst" inputmode="numeric" placeholder="例：4" />
+            <div class="muted" style="margin-top:6px;">合格：4–5 / 境界：3 / 不合格：≤2</div>
+          </div>
+          <div>
+            <label>メモ（任意）</label>
+            <input id="memo" placeholder="例：腹水でBMI参考不可 など" />
+          </div>
+        </div>
+
+        <div class="actions">
+          <button id="demoGreen">Demo: Green</button>
+          <button id="demoYellow" class="secondary">Demo: Yellow</button>
+          <button id="demoRed" class="secondary">Demo: Red</button>
+          <button id="reset" class="secondary">Reset</button>
+        </div>
+
+        <details style="margin-top:12px;">
+          <summary>How to measure（全体：短縮版）</summary>
+          <ul>
+            <li><b>歩行速度</b>：4mを「いつもの速さ」で2回、速い方を採用。</li>
+            <li><b>TUG</b>：椅子→3m往復→着座まで。練習1回→本番1回。</li>
+            <li><b>握力</b>：左右2回ずつ、最大値を採用。</li>
+            <li><b>Mini-Cog</b>：3語遅延再生(0–3)＋時計描画(0 or 2)＝合計0–5。</li>
+            <li><b>MWST</b>：3mL水で評価。強いむせ等は安全優先で中止。</li>
+          </ul>
+          <details style="margin-top:10px;">
+            <summary>完全版を開く（手順の詳細）</summary>
+            <ul>
+              <li><b>歩行速度（4m）</b>：平坦路で加速/減速区間を確保（可能なら前後1–2m）。開始/終了ラインを明示し、秒で計測→m/s換算。2回実施し良い方。</li>
+              <li><b>TUG</b>：肘掛け椅子から立ち上がり、3m先の目印まで歩行→方向転換→戻って着座。転倒リスクがあれば見守り/介助を優先。</li>
+              <li><b>握力</b>：利き手・非利き手それぞれ2回、姿勢は座位/立位で一定に。最大値を記録。</li>
+              <li><b>Mini-Cog</b>：3語提示→時計描画（指定時刻）→遅延再生。時計描画は0/2点、遅延再生は0–3点。</li>
+              <li><b>MWST</b>：3mL水を口腔内保持→嚥下。むせ、湿性嗄声、呼吸変化などがあれば中止し安全対応。</li>
+            </ul>
+          </details>
+        </details>
+      </div>
+    </section>
+
+    <!-- RIGHT: Score -->
+    <aside class="card" aria-label="結果">
+      <div class="hd"><h2>結果（リアルタイム）</h2></div>
+      <div class="bd">
+        <div class="kpi">
+          <div class="box">
+            <div class="pill"><span class="dot" id="dotOverall"></span><span>Overall</span></div>
+            <div class="big" id="overall">—</div>
+            <div class="muted" id="yellowPlan">&nbsp;</div>
+          </div>
+          <div class="box">
+            <div class="pill"><span class="dot" id="dotRisk"></span><span>Red triggers</span></div>
+            <div class="big" id="redCount">0</div>
+            <div class="muted">Red条件に該当すると即Red</div>
+          </div>
+        </div>
+
+        <div class="scoregrid" id="scoregrid"></div>
+
+        <div class="score" style="margin-top:10px;">
+          <div class="top"><div class="name">次の一手（Auto suggestion）</div></div>
+          <ul class="list" id="nextSteps"></ul>
+        </div>
+
+        <div class="score" style="margin-top:10px;">
+          <div class="top"><div class="name">判定根拠（Why?）</div></div>
+          <ul class="list" id="why"></ul>
+          <div class="muted" style="margin-top:6px;">※Yellowは「Green条件の未達が1–2項目」で、Redに該当しない場合。</div>
+        </div>
+      </div>
+    </aside>
+  </div>
+</div>
+
+<script>
+  const el = (id)=>document.getElementById(id);
+  const parseNum = (v)=>{const n=parseFloat(String(v||'').trim()); return Number.isFinite(n)?n:null;};
+  const parseIntSafe = (v)=>{const n=parseInt(String(v||'').trim(),10); return Number.isFinite(n)?n:null;};
+
+  function levelDot(level){return level==='good'?'good':level==='warn'?'warn':level==='bad'?'bad':'na';}
+
+
+  const domainHelp = {
+    'ADL': {
+      logicShort: [
+        'Katz：6=合格 / 4–5=境界 / ≤3=不合格（Red）',
+        'Lawton：7–8=合格 / 4–6=境界 / ≤3=不合格（Red）',
+        'Gate B Green条件：Katz=6 かつ Lawton≥7'
+      ],
+      logicFull: [
+        'ADLは「日常生活が自立しているか」をみる領域です。Katzは基本ADL、Lawtonは手段的ADL。',
+        'Red：Katz≤3 または Lawton≤3（いずれも自立性が大きく低下）。',
+        'Yellow：Green条件（Katz=6, Lawton≥7）を満たさないがRedではない場合。'
+      ],
+      howShort: [
+        'Katz：入浴/更衣/排泄/移乗/排尿・排便の自立を確認。',
+        'Lawton：電話/買物/食事準備/家事/洗濯/移動/服薬/金銭管理。'
+      ],
+      howFull: [
+        '本人だけでなく家族・看護記録も参照し、直近2–4週の実状を確認。',
+        '「できる/できない」が曖昧なら、介助量（見守り/一部介助/全介助）で具体化。'
+      ]
+    },
+    '身体機能': {
+      logicShort: [
+        '握力：男≥28kg / 女≥18kg が合格（未満は不合格）',
+        '歩行速度：≥1.0 m/s が合格（未満は不合格）',
+        'TUG：<12.0秒 が合格（≥12.0秒は不合格）',
+        'Red：上の3項目のうち不合格が2項目以上'
+      ],
+      logicFull: [
+        '3項目はサルコペニア/フレイルの代表的指標として扱います。',
+        'Redは「複数の身体機能低下」がある状態を想定（不合格が2項目以上）。',
+        'Yellowは不合格が1項目など、介入により改善が期待できる層。'
+      ],
+      howShort: [
+        '握力：左右2回ずつ→最大値。',
+        '歩行速度：4m×2回→速い方。',
+        'TUG：練習1回→本番1回。'
+      ],
+      howFull: [
+        '歩行は加速/減速区間を確保。計測は4m区間のみ。',
+        'TUGは転倒リスクに注意し、必要なら見守り/介助優先。',
+        '握力は姿勢・把持幅を一定にし、痛みがあれば中止。'
+      ]
+    },
+    '認知': {
+      logicShort: [
+        'Mini-Cog：3–5=合格 / ≤2=不合格（Red）',
+        'Gate B Green条件：Mini-Cog≥3'
+      ],
+      logicFull: [
+        '認知低下は服薬管理・セルフケア・周術期せん妄リスクに直結。',
+        'Red：Mini-Cog≤2。原因（肝性脳症、鎮静、睡眠不足など）が可逆的か確認。'
+      ],
+      howShort: [
+        '3語提示→時計描画→遅延再生。'
+      ],
+      howFull: [
+        '時計描画は指定時刻を明確に。失語・手指巧緻性低下がある場合は解釈注意。'
+      ]
+    },
+    '気分': {
+      logicShort: [
+        'GDS-15：0–5=合格 / >5=不合格（Red）',
+        'Gate B Green条件：GDS≤5'
+      ],
+      logicFull: [
+        '抑うつは活動性低下・栄養低下と関連。',
+        'Red：GDS>5。疼痛・不眠・社会的要因の評価もセットで。'
+      ],
+      howShort: [
+        '15項目を本人に確認（Yes/No）。'
+      ],
+      howFull: [
+        '理解困難があれば家族補助や別尺度も検討。自殺念慮があれば緊急対応。'
+      ]
+    },
+    '栄養・嚥下': {
+      logicShort: [
+        'MNA-SF：12–14=合格 / 8–11=リスク / ≤7=低栄養（Red）',
+        'MWST：4–5=合格 / 3=境界 / ≤2=不合格',
+        'Gate B Green条件：MNA≥12（※嚥下は参考；安全優先）'
+      ],
+      logicFull: [
+        'Red：MNA≤7は強い栄養介入の対象。',
+        'Yellow：MNA 8–11（リスク）など。',
+        '嚥下は周術期誤嚥/肺炎リスクの観点で、低値なら専門介入を推奨。'
+      ],
+      howShort: [
+        'MNA-SF：6項目で採点。',
+        'MWST：3mL水で評価（安全優先）。'
+      ],
+      howFull: [
+        '浮腫/腹水で体重評価が難しい場合は筋量指標（握力・CT PMI等）も併用。',
+        'MWSTはむせ・湿性嗄声・呼吸変化を観察し、危険なら中止。'
+      ]
+    },
+    '社会的支援': {
+      logicShort: [
+        '支援成立=合格 / 不成立=不合格（Red）',
+        'Gate B Green条件：支援成立'
+      ],
+      logicFull: [
+        '服薬・通院・緊急時対応が「実行可能か」を確認。',
+        'Red：不成立。代替支援（家族/訪問看護/地域連携など）で改善余地があるか検討。'
+      ],
+      howShort: [
+        '同居/通院手段/服薬管理/緊急連絡をチェック。'
+      ],
+      howFull: [
+        '“誰が・いつ・何を”支援するか（責任者）を明文化。遠方/独居は特に要注意。'
+      ]
+    }
+  };
+
+  function helpDetails(title){
+    const d = domainHelp[title];
+    if(!d) return '';
+    const li = arr => (arr||[]).map(x=>`<li>${x}</li>`).join('');
+    return `
+      <details style="margin-top:10px;">
+        <summary>判定/測定ガイド（クリックで開く）</summary>
+        <div class="helpgrid">
+          <div class="helpsec">
+            <div class="helpTitle">判定ロジック（短縮版）</div>
+            <ul>${li(d.logicShort)}</ul>
+            <details style="margin-top:8px;">
+              <summary>完全版を開く</summary>
+              <ul>${li(d.logicFull)}</ul>
+            </details>
+          </div>
+          <div class="helpsec">
+            <div class="helpTitle">How to measure（短縮版）</div>
+            <ul>${li(d.howShort)}</ul>
+            <details style="margin-top:8px;">
+              <summary>完全版を開く</summary>
+              <ul>${li(d.howFull)}</ul>
+            </details>
+          </div>
+        </div>
+      </details>`;
+  }
+
+  function evaluate(){
+    const sex = el('sex').value || null;
+    const katz = parseIntSafe(el('katz').value);
+    const lawton = parseIntSafe(el('lawton').value);
+    const grip = parseNum(el('grip').value);
+    const walk = parseNum(el('walk').value);
+    const tug = parseNum(el('tug').value);
+    const mc = parseIntSafe(el('minicog').value);
+    const gds = parseIntSafe(el('gds').value);
+    const mna = parseIntSafe(el('mna').value);
+    const mwst = parseIntSafe(el('mwst').value);
+    const support = el('support').value || null;
+
+    const missing=[];
+    const unmet=[];
+    const red=[];
+
+    // ADL
+    let katzLevel=null, lawtonLevel=null;
+    if(katz==null) missing.push('Katz ADL');
+    else{
+      katzLevel = (katz===6)?'good':(katz>=4?'warn':'bad');
+      if(katz<=3) red.push('Katz ADL<=3');
+      if(katz!==6) unmet.push('Katz ADLが6ではない');
+    }
+    if(lawton==null) missing.push('Lawton ADL');
+    else{
+      lawtonLevel = (lawton>=7)?'good':(lawton>=4?'warn':'bad');
+      if(lawton<=3) red.push('Lawton ADL<=3');
+      if(!(lawton>=7)) unmet.push('Lawton ADLが7以上ではない');
+    }
+
+    // Physical
+    let gripLevel=null, walkLevel=null, tugLevel=null;
+    const physFails=[];
+    if(sex==null) missing.push('性別');
+
+    if(grip==null) missing.push('握力');
+    else if(!sex) gripLevel=null;
+    else{
+      const ok = (sex==='M') ? grip>=28 : grip>=18;
+      gripLevel = ok?'good':'bad';
+      if(!ok) physFails.push('握力不合格');
+      if(!ok) unmet.push('握力が基準未満');
+    }
+
+    if(walk==null) missing.push('歩行速度');
+    else{
+      const ok = walk>=1.0;
+      walkLevel = ok?'good':'bad';
+      if(!ok) physFails.push('歩行速度不合格');
+      if(!ok) unmet.push('歩行速度が1.0未満');
+    }
+
+    if(tug==null) missing.push('TUG');
+    else{
+      const ok = tug<12.0;
+      tugLevel = ok?'good':'bad';
+      if(!ok) physFails.push('TUG不合格');
+      if(!ok) unmet.push('TUGが12秒以上');
+    }
+
+    if(physFails.length>=2) red.push('身体機能（握力/歩行速度/TUG）で不合格が2項目以上');
+
+    // Cognition & Mood
+    let mcLevel=null, gdsLevel=null;
+    if(mc==null) missing.push('Mini-Cog');
+    else{
+      mcLevel = mc>=3?'good':'bad';
+      if(mc<=2) red.push('Mini-Cog<=2');
+      if(mc<3) unmet.push('Mini-Cogが3未満');
+    }
+    if(gds==null) missing.push('GDS-15');
+    else{
+      gdsLevel = gds<=5?'good':'bad';
+      if(gds>5) red.push('GDS-15>5');
+      if(gds>5) unmet.push('GDS-15が6以上');
+    }
+
+    // Nutrition & Swallow
+    let mnaLevel=null, mwstLevel=null;
+    if(mna==null) missing.push('MNA-SF');
+    else{
+      mnaLevel = (mna>=12)?'good':(mna>=8?'warn':'bad');
+      if(mna<=7) red.push('MNA-SF<=7');
+      if(mna<12) unmet.push('MNA-SFが12未満');
+    }
+
+    if(mwst==null) missing.push('MWST');
+    else{
+      mwstLevel = (mwst>=4)?'good':(mwst===3?'warn':'bad');
+      // MWSTはRed条件に含まれていないが、Green条件（＝安全な経口）として扱う
+      if(mwst<4) unmet.push('MWSTが4未満');
+    }
+
+    // Social
+    let socLevel=null;
+    if(support==null) missing.push('社会的支援（総合）');
+    else{
+      socLevel = (support==='ok')?'good':'bad';
+      if(support==='ng') red.push('社会的支援不成立');
+      if(support!=='ok') unmet.push('社会的支援が成立していない');
+    }
+
+    // Overall
+    let overall='—';
+    let yellowPlan='';
+
+    const greenOk = (
+      katz===6 && lawton!=null && lawton>=7 &&
+      sex && grip!=null && walk!=null && tug!=null && gripLevel==='good' && walkLevel==='good' && tugLevel==='good' &&
+      mc!=null && mc>=3 &&
+      gds!=null && gds<=5 &&
+      mna!=null && mna>=12 &&
+      support==='ok'
+    );
+
+    if(red.length>0) overall='Red';
+    else if(greenOk) overall='Green';
+    else if(missing.length>0 && unmet.length===0) overall='—';
+    else overall='Yellow';
+
+    if(overall==='Yellow'){
+      // Yellow-2w vs 4w
+      const mild = (
+        katz===6 && (mc!=null && mc>=3) && support==='ok' &&
+        ((physFails.length===1 && (mna==null || mna>=12)) || (mna!=null && mna>=8 && mna<=11 && physFails.length===0))
+      );
+      yellowPlan = mild ? 'Yellow-2週（軽度：2週プレハブ目安）' : 'Yellow-4週（4週プレハブ目安）';
+    }
+
+    return {
+      inputs:{sex,katz,lawton,grip,walk,tug,mc,gds,mna,mwst,support, memo:el('memo').value||''},
+      levels:{katzLevel,lawtonLevel,gripLevel,walkLevel,tugLevel,mcLevel,gdsLevel,mnaLevel,mwstLevel,socLevel},
+      physFails:physFails.length,
+      missing:[...new Set(missing)],
+      unmet:[...new Set(unmet)],
+      red:[...new Set(red)],
+      overall,
+      yellowPlan,
+      greenOk
+    };
+  }
+
+  function dotSet(id, level){
+    const d=el(id); if(!d) return;
+    d.classList.remove('good','warn','bad','na');
+    d.classList.add(levelDot(level));
+  }
+
+  function render(){
+    const ev = evaluate();
+
+    // Overall
+    dotSet('dotOverall', ev.overall==='Green'?'good':ev.overall==='Yellow'?'warn':ev.overall==='Red'?'bad':'na');
+    el('overall').textContent = ev.overall;
+    el('yellowPlan').textContent = (ev.overall==='Yellow') ? ev.yellowPlan : (ev.overall==='Green' ? 'Gate B Green' : (ev.overall==='Red' ? 'Gate B Red' : '入力待ち'));
+
+    dotSet('dotRisk', ev.red.length>0?'bad':'na');
+    el('redCount').textContent = String(ev.red.length);
+
+    // Domain cards
+    const cards = [
+      {name:'ADL', dot: (ev.levels.katzLevel==='bad'||ev.levels.lawtonLevel==='bad')?'bad':((ev.levels.katzLevel&&ev.levels.lawtonLevel)?((ev.levels.katzLevel==='good'&&ev.levels.lawtonLevel==='good')?'good':'warn'):null),
+       sub: (ev.inputs.katz==null||ev.inputs.lawton==null)?'未入力':`Katz ${ev.inputs.katz}/6, Lawton ${ev.inputs.lawton}/8`},
+      {name:'身体機能', dot: (ev.physFails>=2)?'bad':((ev.levels.gripLevel==='good'&&ev.levels.walkLevel==='good'&&ev.levels.tugLevel==='good')?'good':((ev.levels.gripLevel||ev.levels.walkLevel||ev.levels.tugLevel)?'warn':null)),
+       sub: (ev.inputs.grip==null||ev.inputs.walk==null||ev.inputs.tug==null)?'未入力':`Grip ${ev.inputs.grip}kg / Walk ${ev.inputs.walk}m/s / TUG ${ev.inputs.tug}s`},
+      {name:'認知', dot: ev.levels.mcLevel, sub: (ev.inputs.mc==null)?'未入力':`Mini-Cog ${ev.inputs.mc}/5`},
+      {name:'気分', dot: ev.levels.gdsLevel, sub: (ev.inputs.gds==null)?'未入力':`GDS ${ev.inputs.gds}/15`},
+      {name:'栄養・嚥下', dot: (ev.levels.mnaLevel==='bad'||ev.levels.mwstLevel==='bad')?'bad':((ev.levels.mnaLevel&&ev.levels.mwstLevel)?((ev.levels.mnaLevel==='good'&&ev.levels.mwstLevel==='good')?'good':'warn'):null),
+       sub: `MNA ${ev.inputs.mna??'—'}/14, MWST ${ev.inputs.mwst??'—'}/5`},
+      {name:'社会的支援', dot: ev.levels.socLevel, sub: (ev.inputs.support==null)?'未入力':(ev.inputs.support==='ok'?'支援成立':'不成立')}
+    ];
+
+    const grid = el('scoregrid');
+    grid.innerHTML = cards.map(c=>`
+      <div class="score">
+        <div class="top">
+          <div class="name">${c.name}</div>
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:flex-end;">
+            <span class="pill"><span class="dot ${levelDot(c.dot)}"></span><span>${c.dot? (c.dot==='good'?'合格':c.dot==='warn'?'要注意':'不合格'):'未入力'}</span></span>
+          </div>
+        </div>
+        <div class="sub">${c.sub}</div>
+        ${helpDetails(c.name)}
+      </div>
+    `).join('');
+
+    // Why
+    const why = el('why');
+    const whyItems = [];
+    if(ev.missing.length) whyItems.push(`未入力：${ev.missing.join(' / ')}`);
+    if(ev.red.length) whyItems.push(`Red条件：${ev.red.join(' / ')}`);
+    if(!ev.red.length && ev.unmet.length) whyItems.push(`Green条件未達：${ev.unmet.join(' / ')}`);
+    if(ev.greenOk) whyItems.push('すべてのGreen条件を満たしています。');
+    if(ev.inputs.memo) whyItems.push(`メモ：${ev.inputs.memo}`);
+    why.innerHTML = whyItems.length ? whyItems.map(x=>`<li>${x}</li>`).join('') : '<li>入力すると自動表示します。</li>';
+
+    // Next steps
+    const steps = el('nextSteps');
+    const s=[];
+    if(ev.overall==='Red'){
+      s.push('Redトリガー項目の原因が可逆的か確認（例：肝性脳症、鎮静、脱水、感染、腹水など）。');
+      s.push('可逆的であればプレハブ→再評価。不可逆的なら適応再検討。');
+    } else if(ev.overall==='Yellow'){
+      if(ev.unmet.some(x=>x.includes('歩行速度')||x.includes('TUG')||x.includes('握力'))) s.push('身体機能：リハ/プレハブ（筋力・バランス・歩行）を優先。');
+      if(ev.unmet.some(x=>x.includes('MNA'))) s.push('栄養：栄養介入（摂取量・蛋白/カロリー、サルコペニア評価）を検討。');
+      if(ev.unmet.some(x=>x.includes('GDS'))) s.push('気分：うつ症状の評価・介入（睡眠、疼痛、社会的因子）を検討。');
+      if(ev.unmet.some(x=>x.includes('支援'))) s.push('社会的支援：同居/通院/服薬/緊急連絡の支援体制を再構築。');
+      s.push(`再評価目安：${ev.yellowPlan}`);
+    } else if(ev.overall==='Green'){
+      s.push('Gate BはGreen。Gate Aと合わせて総合判断へ。');
+    } else {
+      s.push('入力を埋めると提案が表示されます。');
+    }
+    steps.innerHTML = s.map(x=>`<li>${x}</li>`).join('');
+  }
+
+  // Demo buttons
+  function setDemo(type){
+    if(type==='Green'){
+      el('sex').value='M'; el('support').value='ok';
+      el('katz').value='6'; el('lawton').value='8';
+      el('grip').value='30'; el('walk').value='1.1'; el('tug').value='10';
+      el('minicog').value='4'; el('gds').value='2';
+      el('mna').value='12'; el('mwst').value='4';
+      el('memo').value='';
+    }
+    if(type==='Yellow'){
+      el('sex').value='M'; el('support').value='ok';
+      el('katz').value='6'; el('lawton').value='7';
+      el('grip').value='27'; el('walk').value='1.1'; el('tug').value='10';
+      el('minicog').value='4'; el('gds').value='3';
+      el('mna').value='12'; el('mwst').value='4';
+      el('memo').value='握力のみ軽度低下（Yellow-2週想定）';
+    }
+    if(type==='Red'){
+      el('sex').value='F'; el('support').value='ok';
+      el('katz').value='2'; el('lawton').value='2';
+      el('grip').value='16'; el('walk').value='0.8'; el('tug').value='14';
+      el('minicog').value='2'; el('gds').value='8';
+      el('mna').value='7'; el('mwst').value='2';
+      el('memo').value='複数Redトリガー（例）';
+    }
+    render();
+  }
+
+  function resetAll(){
+    ['sex','support','katz','lawton','grip','walk','tug','minicog','gds','mna','mwst','memo'].forEach(id=>{ el(id).value=''; });
+    render();
+  }
+
+  ['sex','support','katz','lawton','grip','walk','tug','minicog','gds','mna','mwst','memo'].forEach(id=>{
+    el(id).addEventListener('input', render);
+    el(id).addEventListener('change', render);
+  });
+
+  el('demoGreen').addEventListener('click', ()=>setDemo('Green'));
+  el('demoYellow').addEventListener('click', ()=>setDemo('Yellow'));
+  el('demoRed').addEventListener('click', ()=>setDemo('Red'));
+  el('reset').addEventListener('click', resetAll);
+
+
+  // 表示モード（自動/PC/スマホ）：基本はレスポンシブ自動切替。必要に応じてテスト用に強制できます。
+  function setMode(mode){
+    document.body.dataset.mode = mode;
+    ['modeAuto','modePC','modeMobile'].forEach(id=>{const b=el(id); if(!b) return; b.classList.remove('active');});
+    if(mode==='auto'){delete document.body.dataset.mode; el('modeAuto').classList.add('active');}
+    if(mode==='pc'){el('modePC').classList.add('active');}
+    if(mode==='mobile'){el('modeMobile').classList.add('active');}
+  }
+  el('modeAuto').addEventListener('click', ()=>setMode('auto'));
+  el('modePC').addEventListener('click', ()=>setMode('pc'));
+  el('modeMobile').addEventListener('click', ()=>setMode('mobile'));
+  setMode('auto');
+
+  render();
+</script>
+</body>
+</html>
