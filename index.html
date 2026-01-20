@@ -3,83 +3,119 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Gate B 評価ツール（Dashboard）</title>
+  <title>Gate B 評価ツール（Dashboard v3）</title>
   <style>
     :root{--bg:#070a14;--card:#121a33;--muted:#93a4c7;--text:#eaf0ff;--line:#243057;--good:#22c55e;--warn:#f59e0b;--bad:#ef4444;--na:#64748b;}
     *{box-sizing:border-box;font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Hiragino Kaku Gothic ProN", "Noto Sans JP", "Yu Gothic", sans-serif;}
     body{margin:0;background:radial-gradient(1200px 600px at 20% -10%,rgba(96,165,250,.22),transparent 55%),radial-gradient(1000px 700px at 90% 0%,rgba(34,197,94,.18),transparent 55%),var(--bg);color:var(--text);}
-    header{padding:18px 18px;border-bottom:1px solid rgba(255,255,255,.08);position:sticky;top:0;background:rgba(7,10,20,.92);backdrop-filter: blur(10px);}
+
+    header{padding:16px 18px;border-bottom:1px solid rgba(255,255,255,.08);position:sticky;top:0;background:rgba(7,10,20,.92);backdrop-filter: blur(10px);z-index:10;}
+    .headbar{max-width:1100px;margin:0 auto;display:flex;align-items:flex-start;justify-content:space-between;gap:12px;}
     header h1{margin:0;font-size:18px;}
     header p{margin:6px 0 0;color:var(--muted);font-size:12px;line-height:1.45;}
+
+    .mode{display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:flex-end;}
+    .mode .tag{color:var(--muted);font-size:11px;}
+    .mode button{cursor:pointer;border:none;border-radius:12px;padding:8px 10px;color:var(--text);background:#1e2a52;font-size:12px;}
+    .mode button.active{background:#2b3a6b;outline:1px solid rgba(255,255,255,.12);}
+
     .wrap{max-width:1100px;margin:0 auto;padding:16px;}
+
+
+    .footer{max-width:1100px;margin:0 auto;padding:12px 16px 22px;color:var(--muted);font-size:11px;line-height:1.45;}
+    .footer strong{color:var(--text);}
+
+    /* default responsive */
     .grid{display:grid;grid-template-columns: 1.15fr .85fr;gap:14px;align-items:start;}
     @media (max-width: 980px){.grid{grid-template-columns:1fr;}}
+    .row{display:grid;grid-template-columns: 1fr 1fr;gap:10px;}
+    @media (max-width: 560px){.row{grid-template-columns:1fr;}}
+
+    /* manual mode overrides */
+    body[data-mode="desktop"] .grid{grid-template-columns: 1.15fr .85fr;}
+    body[data-mode="mobile"] .grid{grid-template-columns:1fr;}
+    body[data-mode="mobile"] .row{grid-template-columns:1fr;}
+
     .card{background:rgba(18,26,51,.92);border:1px solid rgba(255,255,255,.08);border-radius:16px;box-shadow:0 18px 45px rgba(0,0,0,.35);} 
     .hd{padding:14px 14px 0;}
     .hd h2{margin:0;font-size:14px;}
     .bd{padding:14px;}
-    .row{display:grid;grid-template-columns: 1fr 1fr;gap:10px;}
-    @media (max-width: 560px){.row{grid-template-columns:1fr;}}
+
     label{display:block;font-size:12px;color:var(--muted);margin:10px 0 6px;}
-    input,select{width:100%;padding:11px 12px;border-radius:12px;border:1px solid rgba(255,255,255,.10);background:rgba(5,8,16,.55);color:var(--text);outline:none;}
-    input:focus,select:focus{border-color: rgba(147,164,199,.6);}    
+    input,select,textarea{width:100%;padding:11px 12px;border-radius:12px;border:1px solid rgba(255,255,255,.10);background:rgba(5,8,16,.55);color:var(--text);outline:none;}
+    input:focus,select:focus,textarea:focus{border-color: rgba(147,164,199,.6);}    
+
     .pill{display:inline-flex;align-items:center;gap:8px;padding:7px 10px;border-radius:999px;font-size:12px;border:1px solid rgba(255,255,255,.10);background:rgba(5,8,16,.4);}
     .dot{width:10px;height:10px;border-radius:999px;display:inline-block;background:var(--na);}
     .good{background:var(--good)!important;} .warn{background:var(--warn)!important;} .bad{background:var(--bad)!important;} .na{background:var(--na)!important;}
+
     .kpi{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;}
+    @media (max-width: 560px){.kpi{grid-template-columns:1fr;}}
     .kpi .box{padding:12px;border-radius:14px;border:1px solid rgba(255,255,255,.08);background:rgba(5,8,16,.35);} 
     .big{font-size:26px;margin-top:2px;font-weight:700;}
+
     .muted{color:var(--muted);font-size:12px;line-height:1.45;}
+
     .scoregrid{display:grid;grid-template-columns:1fr;gap:10px;}
     .score{padding:12px;border-radius:14px;border:1px solid rgba(255,255,255,.08);background:rgba(5,8,16,.35);} 
     .score .top{display:flex;align-items:center;justify-content:space-between;gap:10px;}
     .score .name{font-weight:650;}
     .score .sub{margin-top:6px;color:var(--muted);font-size:12px;}
+
     .list{margin:10px 0 0;padding-left:18px;color:var(--text);font-size:12px;line-height:1.5;}
+
     .actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px;}
-    button{cursor:pointer;border:none;border-radius:12px;padding:10px 12px;color:var(--text);background:#2b3a6b;}
-    button.secondary{background:#1e2a52;}
+    .actions button{cursor:pointer;border:none;border-radius:12px;padding:10px 12px;color:var(--text);background:#2b3a6b;}
+    .actions button.secondary{background:#1e2a52;}
+
     details{border:1px dashed rgba(255,255,255,.18);border-radius:12px;padding:10px 12px;background:rgba(5,8,16,.25);}
     details summary{cursor:pointer;color:var(--text);font-size:12px;}
-    details ul{margin:10px 0 0;padding-left:18px;color:var(--muted);font-size:12px;line-height:1.55;}
-    .headerbar{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap;}
-    .modes{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
-    .modebtn{padding:8px 10px;border-radius:999px;font-size:12px;background:rgba(43,58,107,.85);border:1px solid rgba(255,255,255,.12);}
-    .modebtn.active{outline:2px solid rgba(96,165,250,.55);}
-    .linkbtn{padding:6px 10px;border-radius:999px;font-size:12px;background:rgba(30,42,82,.9);border:1px solid rgba(255,255,255,.10);}
-    .helpgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px;}
-    @media (max-width: 560px){.helpgrid{grid-template-columns:1fr;}}
-    .helpsec{padding:10px;border-radius:12px;border:1px solid rgba(255,255,255,.08);background:rgba(5,8,16,.35);}
-    .helpTitle{font-size:12px;font-weight:650;margin-bottom:6px;}
-    .helpsec ul{margin:8px 0 0;padding-left:18px;color:var(--muted);font-size:12px;line-height:1.55;}
-    .tiny{font-size:11px;color:var(--muted);}
 
-    /* Optional: force layout mode for testing */
-    body[data-mode="pc"] .grid{grid-template-columns: 1.15fr .85fr;}
-    body[data-mode="pc"] .row{grid-template-columns: 1fr 1fr;}
-    body[data-mode="mobile"] .grid{grid-template-columns:1fr;}
-    body[data-mode="mobile"] .row{grid-template-columns:1fr;}
+    .tabs{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;}
+    .tabs button{cursor:pointer;border:none;border-radius:999px;padding:7px 10px;color:var(--text);background:#1e2a52;font-size:12px;}
+    .tabs button.active{background:#2b3a6b;outline:1px solid rgba(255,255,255,.12);}
 
+    .howBox{margin-top:10px;border:1px solid rgba(255,255,255,.10);border-radius:12px;background:rgba(5,8,16,.22);padding:10px 12px;}
+    .howBox ul{margin:6px 0 0;padding-left:18px;color:var(--muted);font-size:12px;line-height:1.55;}
+    .howBox pre{white-space:pre-wrap;margin:6px 0 0;color:var(--muted);font-size:12px;line-height:1.6;}
+
+    .linkbtn{background:transparent;border:1px solid rgba(255,255,255,.14);}
+
+    /* modal */
+    .modalBackdrop{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;padding:16px;z-index:50;}
+    .modalBackdrop.open{display:flex;}
+    .modal{max-width:900px;width:100%;background:rgba(18,26,51,.98);border:1px solid rgba(255,255,255,.12);border-radius:18px;box-shadow:0 24px 80px rgba(0,0,0,.6);}
+    .modalHead{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:14px 14px 0;}
+    .modalHead h3{margin:0;font-size:14px;}
+    .modalBody{padding:14px;}
+    .close{background:#1e2a52;border:none;border-radius:12px;padding:8px 10px;color:var(--text);cursor:pointer;}
+    .mono{font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;}
+    .ruleGrid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+    @media (max-width: 720px){.ruleGrid{grid-template-columns:1fr;}}
+    .ruleCard{border:1px solid rgba(255,255,255,.10);border-radius:14px;background:rgba(5,8,16,.22);padding:10px 12px;}
+    .ruleCard h4{margin:0 0 6px;font-size:13px;}
+    .ruleCard ul{margin:0;padding-left:18px;color:var(--muted);font-size:12px;line-height:1.55;}
   </style>
 </head>
 <body>
 <header>
-  <div class="headerbar">
+  <div class="headbar">
     <div>
       <h1>Gate B 評価ツール（Dashboard）</h1>
-      <p>入力すると結果がリアルタイム更新されます。各カードの「判定/測定ガイド」をクリックすると、判定ロジックとHow to measure（短縮版/完全版）が開きます。</p>
+      <p>入力すると右側がリアルタイムに更新されます。PC/スマホは自動最適化（右のボタンで擬似切替も可能）。</p>
     </div>
-    <div class="modes" aria-label="表示モード">
-      <span class="tiny">表示：</span>
-      <button class="modebtn" id="modeAuto" type="button">自動</button>
-      <button class="modebtn" id="modePC" type="button">PC</button>
-      <button class="modebtn" id="modeMobile" type="button">スマホ</button>
+    <div class="mode" aria-label="表示モード">
+      <span class="tag">表示</span>
+      <button id="modeAuto" class="active" type="button">自動</button>
+      <button id="modePC" type="button">PC</button>
+      <button id="modeSP" type="button">スマホ</button>
     </div>
   </div>
 </header>
 
 <div class="wrap">
   <div class="grid">
+
     <!-- LEFT: Input -->
     <section class="card" aria-label="入力">
       <div class="hd"><h2>入力（Gate B）</h2></div>
@@ -160,31 +196,78 @@
         </div>
 
         <div class="actions">
-          <button id="demoGreen">Demo: Green</button>
-          <button id="demoYellow" class="secondary">Demo: Yellow</button>
-          <button id="demoRed" class="secondary">Demo: Red</button>
-          <button id="reset" class="secondary">Reset</button>
+          <button id="demoGreen" type="button">Demo: Green</button>
+          <button id="demoYellow" class="secondary" type="button">Demo: Yellow</button>
+          <button id="demoRed" class="secondary" type="button">Demo: Red</button>
+          <button id="reset" class="secondary" type="button">Reset</button>
         </div>
 
-        <details style="margin-top:12px;">
-          <summary>How to measure（全体：短縮版）</summary>
-          <ul>
-            <li><b>歩行速度</b>：4mを「いつもの速さ」で2回、速い方を採用。</li>
-            <li><b>TUG</b>：椅子→3m往復→着座まで。練習1回→本番1回。</li>
-            <li><b>握力</b>：左右2回ずつ、最大値を採用。</li>
-            <li><b>Mini-Cog</b>：3語遅延再生(0–3)＋時計描画(0 or 2)＝合計0–5。</li>
-            <li><b>MWST</b>：3mL水で評価。強いむせ等は安全優先で中止。</li>
-          </ul>
-          <details style="margin-top:10px;">
-            <summary>完全版を開く（手順の詳細）</summary>
+        <!-- How to measure (global only) -->
+        <details style="margin-top:12px;" id="howToMeasure">
+          <summary>How to measure（クリックで開く：短縮→完全）</summary>
+          <div class="tabs" role="tablist" aria-label="How to measure tabs">
+            <button type="button" id="howShortBtn" class="active" aria-selected="true">短縮版</button>
+            <button type="button" id="howFullBtn" aria-selected="false">完全版</button>
+          </div>
+          <div class="howBox" id="howShort">
+            <div class="muted">まずはこれだけ覚えればOK（現場で迷いやすい所だけ）。</div>
             <ul>
-              <li><b>歩行速度（4m）</b>：平坦路で加速/減速区間を確保（可能なら前後1–2m）。開始/終了ラインを明示し、秒で計測→m/s換算。2回実施し良い方。</li>
-              <li><b>TUG</b>：肘掛け椅子から立ち上がり、3m先の目印まで歩行→方向転換→戻って着座。転倒リスクがあれば見守り/介助を優先。</li>
-              <li><b>握力</b>：利き手・非利き手それぞれ2回、姿勢は座位/立位で一定に。最大値を記録。</li>
-              <li><b>Mini-Cog</b>：3語提示→時計描画（指定時刻）→遅延再生。時計描画は0/2点、遅延再生は0–3点。</li>
-              <li><b>MWST</b>：3mL水を口腔内保持→嚥下。むせ、湿性嗄声、呼吸変化などがあれば中止し安全対応。</li>
+              <li><b>歩行速度</b>：4mを「いつもの速さ」で2回、速い方を採用。</li>
+              <li><b>TUG</b>：椅子→3m往復→着座まで。練習1回→本番1回。</li>
+              <li><b>握力</b>：左右2回ずつ、最大値（ベスト）を採用。</li>
+              <li><b>Mini-Cog</b>：3語遅延再生(0–3)＋時計描画(0 or 2)＝合計0–5。</li>
+              <li><b>MWST</b>：3mL水で評価。強いむせ等は安全優先で中止。</li>
             </ul>
-          </details>
+          </div>
+          <div class="howBox" id="howFull" style="display:none;">
+            <div class="muted">完全版（そのままコピペして手順書にも使える形）。</div>
+            <pre>Katz ADL
+普段の状態で、入浴・更衣・トイレ・移乗・排泄・食事の6項目
+『自立=1』『介助=0』で採点
+※肝性脳症や腹水など可逆的要因がある場合は備考に記載
+
+Lawton ADL
+電話・買い物・食事準備・家事・洗濯・移動手段・服薬管理・金銭管理の8項目
+『できる=1』『できない/要支援=0』で採点
+
+握力
+姿勢：椅子座位
+手順：左右各2回測定、最大値（ベスト）を採用
+
+歩行速度
+準備：床に4mの開始線・終了線をテープで示す。可能なら前後に加速/減速スペース（各1m）を確保
+手順：『いつもの速さで歩いてください』。開始線を足が越えた瞬間から計時し、終了線を足が越えた瞬間で停止。2回実施し、短い時間（速い方）を採用。
+
+TUG（Timed Up & Go）
+準備：椅子と、前方3m地点の目印（テープ）を用意。
+手順：『合図で立ち上がり、3m先まで歩いて回って戻り、椅子に座ってください』。『はい』で開始。座って安定した時点で停止。1回練習→本番1回。
+※立ち上がり、方向転換のふらつき、歩幅、介助の要否を観察、備考に記載。
+
+Mini-Cog
+手順：①3つの単語を提示し、復唱してもらう（例：『さくら・ねこ・バス』など）。
+②時計描画を依頼（例：『11時10分を示す時計を書いてください』）。
+③時計描画後、先ほどの3語を思い出して言ってもらう（遅延再生）。
+採点：遅延再生0-3点＋時計描画（正常=2点/異常=0点）で合計0-5点。
+※肝性脳症、眠剤、睡眠不足で一時的に低下し得るため備考に記載。
+
+GDS-15
+準備：GDS-15質問票
+手順：15問をYes/Noで回答（本人が読めなければ読み上げ可）。合計0–15点。
+
+MNA-SF
+準備：MNA-SF質問票
+手順：摂取低下、体重減少、移動性、急性疾患/ストレス、神経心理、BMIまたは下腿周径の６項目を質問票通りに評価。合計0–14点。
+※浮腫や腹水で体重/BMIが当てにならない場合は備考に記載し、下腿周径なども参考にする。
+
+嚥下：改訂水飲みテスト（MWST）
+安全：座位で実施。強いむせ、反復する誤嚥性肺炎疑い、意識低下がある場合は無理に行わない。可能ならSpO2を装着。異常があれば中止、安全第一。
+手順：3mLの水を準備（シリンジ/スポイト）。『飲み込んでください』と指示し、嚥下の可否、咳込み、湿性嗄声（ガラガラ声）、呼吸状態（SpO2低下など）を観察。
+評価：１点：嚥下なし、むせるand/or呼吸切迫
+2点：嚥下あり、呼吸切迫
+3点：嚥下あり、呼吸良好、むせるand/or湿性嗄声
+4点：嚥下あり、呼吸良好、むせなし
+5点：評点4に加え、反復嚥下が30秒以内に2回可能</pre>
+          </div>
         </details>
       </div>
     </section>
@@ -195,7 +278,10 @@
       <div class="bd">
         <div class="kpi">
           <div class="box">
-            <div class="pill"><span class="dot" id="dotOverall"></span><span>Overall</span></div>
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
+              <div class="pill" title="Overall"><span class="dot" id="dotOverall"></span><span>Overall</span></div>
+              <button type="button" id="openLogic" class="linkbtn" style="padding:8px 10px;border-radius:12px;color:var(--text);">判定ロジック</button>
+            </div>
             <div class="big" id="overall">—</div>
             <div class="muted" id="yellowPlan">&nbsp;</div>
           </div>
@@ -220,6 +306,80 @@
         </div>
       </div>
     </aside>
+
+  </div>
+</div>
+
+
+<footer class="footer">
+  <div><strong>Gate B Dashboard（完成版）</strong> / version: v3+ / updated: 2026-01-19</div>
+</footer>
+
+<!-- 判定ロジック modal -->
+<div class="modalBackdrop" id="logicModal" role="dialog" aria-modal="true" aria-label="判定ロジック">
+  <div class="modal">
+    <div class="modalHead">
+      <h3>Gate B 判定ロジック</h3>
+      <button class="close" type="button" id="closeLogic">閉じる</button>
+    </div>
+    <div class="modalBody">
+      <div class="tabs" role="tablist" aria-label="判定ロジック tabs" style="margin-top:0;">
+        <button type="button" id="logicShortBtn" class="active" aria-selected="true">短縮版</button>
+        <button type="button" id="logicFullBtn" aria-selected="false">完全版</button>
+      </div>
+
+      <div id="logicShort" class="ruleGrid" style="margin-top:10px;">
+        <div class="ruleCard">
+          <h4>Green</h4>
+          <ul>
+            <li>Katz=6</li>
+            <li>Lawton ≥7</li>
+            <li>握力（男≥28 / 女≥18）</li>
+            <li>歩行速度 ≥1.0 m/s</li>
+            <li>TUG &lt;12.0 秒</li>
+            <li>Mini-Cog ≥3</li>
+            <li>GDS-15 ≤5</li>
+            <li>MNA-SF ≥12</li>
+            <li>社会的支援：成立</li>
+          </ul>
+        </div>
+        <div class="ruleCard">
+          <h4>Red（いずれかで即Red）</h4>
+          <ul>
+            <li>Katz ≤3 または Lawton ≤3</li>
+            <li>身体機能（握力/歩行/TUG）の不合格が2項目以上</li>
+            <li>Mini-Cog ≤2</li>
+            <li>GDS-15 &gt;5</li>
+            <li>MNA-SF ≤7</li>
+            <li>社会的支援：不成立</li>
+          </ul>
+        </div>
+        <div class="ruleCard" style="grid-column:1/-1;">
+          <h4>Yellow</h4>
+          <ul>
+            <li>Redではないが、Green条件を満たさない場合</li>
+            <li>再評価目安：Yellow-2週 / Yellow-4週（下の完全版ルール参照）</li>
+          </ul>
+        </div>
+      </div>
+
+      <div id="logicFull" style="display:none;margin-top:10px;" class="ruleCard">
+        <h4>Yellow-2週 / Yellow-4週（目安）</h4>
+        <ul>
+          <li><b>Yellow-2週（軽度）</b>：例）身体機能の不合格が1項目のみ（他は概ねGreen）など、短期プレハブで改善が期待できるパターン</li>
+          <li><b>Yellow-4週（中等度）</b>：複数領域でGreen未達（ただしRedではない）など、介入期間を長めに見積もるパターン</li>
+          <li>このツールでは、以下の簡易判定で2週/4週を表示しています：
+            <ul>
+              <li>mild（2週）：Katz=6 / Mini-Cog≥3 / 支援成立 を満たしつつ、①身体機能の不合格が1項目のみ（かつMNA≥12）<br/>または ②身体機能は全合格でMNAが8–11</li>
+              <li>上記以外のYellowは4週目安</li>
+            </ul>
+          </li>
+          <li>※現場運用に合わせて、ここ（2週/4週ルール）は簡単に調整できます。</li>
+        </ul>
+      </div>
+
+      <div class="muted" style="margin-top:10px;">注：閾値はPDF（Gate B）準拠。MWSTは「Green条件の補助」として表示に反映（Redトリガーには含めていません）。</div>
+    </div>
   </div>
 </div>
 
@@ -229,149 +389,6 @@
   const parseIntSafe = (v)=>{const n=parseInt(String(v||'').trim(),10); return Number.isFinite(n)?n:null;};
 
   function levelDot(level){return level==='good'?'good':level==='warn'?'warn':level==='bad'?'bad':'na';}
-
-
-  const domainHelp = {
-    'ADL': {
-      logicShort: [
-        'Katz：6=合格 / 4–5=境界 / ≤3=不合格（Red）',
-        'Lawton：7–8=合格 / 4–6=境界 / ≤3=不合格（Red）',
-        'Gate B Green条件：Katz=6 かつ Lawton≥7'
-      ],
-      logicFull: [
-        'ADLは「日常生活が自立しているか」をみる領域です。Katzは基本ADL、Lawtonは手段的ADL。',
-        'Red：Katz≤3 または Lawton≤3（いずれも自立性が大きく低下）。',
-        'Yellow：Green条件（Katz=6, Lawton≥7）を満たさないがRedではない場合。'
-      ],
-      howShort: [
-        'Katz：入浴/更衣/排泄/移乗/排尿・排便の自立を確認。',
-        'Lawton：電話/買物/食事準備/家事/洗濯/移動/服薬/金銭管理。'
-      ],
-      howFull: [
-        '本人だけでなく家族・看護記録も参照し、直近2–4週の実状を確認。',
-        '「できる/できない」が曖昧なら、介助量（見守り/一部介助/全介助）で具体化。'
-      ]
-    },
-    '身体機能': {
-      logicShort: [
-        '握力：男≥28kg / 女≥18kg が合格（未満は不合格）',
-        '歩行速度：≥1.0 m/s が合格（未満は不合格）',
-        'TUG：<12.0秒 が合格（≥12.0秒は不合格）',
-        'Red：上の3項目のうち不合格が2項目以上'
-      ],
-      logicFull: [
-        '3項目はサルコペニア/フレイルの代表的指標として扱います。',
-        'Redは「複数の身体機能低下」がある状態を想定（不合格が2項目以上）。',
-        'Yellowは不合格が1項目など、介入により改善が期待できる層。'
-      ],
-      howShort: [
-        '握力：左右2回ずつ→最大値。',
-        '歩行速度：4m×2回→速い方。',
-        'TUG：練習1回→本番1回。'
-      ],
-      howFull: [
-        '歩行は加速/減速区間を確保。計測は4m区間のみ。',
-        'TUGは転倒リスクに注意し、必要なら見守り/介助優先。',
-        '握力は姿勢・把持幅を一定にし、痛みがあれば中止。'
-      ]
-    },
-    '認知': {
-      logicShort: [
-        'Mini-Cog：3–5=合格 / ≤2=不合格（Red）',
-        'Gate B Green条件：Mini-Cog≥3'
-      ],
-      logicFull: [
-        '認知低下は服薬管理・セルフケア・周術期せん妄リスクに直結。',
-        'Red：Mini-Cog≤2。原因（肝性脳症、鎮静、睡眠不足など）が可逆的か確認。'
-      ],
-      howShort: [
-        '3語提示→時計描画→遅延再生。'
-      ],
-      howFull: [
-        '時計描画は指定時刻を明確に。失語・手指巧緻性低下がある場合は解釈注意。'
-      ]
-    },
-    '気分': {
-      logicShort: [
-        'GDS-15：0–5=合格 / >5=不合格（Red）',
-        'Gate B Green条件：GDS≤5'
-      ],
-      logicFull: [
-        '抑うつは活動性低下・栄養低下と関連。',
-        'Red：GDS>5。疼痛・不眠・社会的要因の評価もセットで。'
-      ],
-      howShort: [
-        '15項目を本人に確認（Yes/No）。'
-      ],
-      howFull: [
-        '理解困難があれば家族補助や別尺度も検討。自殺念慮があれば緊急対応。'
-      ]
-    },
-    '栄養・嚥下': {
-      logicShort: [
-        'MNA-SF：12–14=合格 / 8–11=リスク / ≤7=低栄養（Red）',
-        'MWST：4–5=合格 / 3=境界 / ≤2=不合格',
-        'Gate B Green条件：MNA≥12（※嚥下は参考；安全優先）'
-      ],
-      logicFull: [
-        'Red：MNA≤7は強い栄養介入の対象。',
-        'Yellow：MNA 8–11（リスク）など。',
-        '嚥下は周術期誤嚥/肺炎リスクの観点で、低値なら専門介入を推奨。'
-      ],
-      howShort: [
-        'MNA-SF：6項目で採点。',
-        'MWST：3mL水で評価（安全優先）。'
-      ],
-      howFull: [
-        '浮腫/腹水で体重評価が難しい場合は筋量指標（握力・CT PMI等）も併用。',
-        'MWSTはむせ・湿性嗄声・呼吸変化を観察し、危険なら中止。'
-      ]
-    },
-    '社会的支援': {
-      logicShort: [
-        '支援成立=合格 / 不成立=不合格（Red）',
-        'Gate B Green条件：支援成立'
-      ],
-      logicFull: [
-        '服薬・通院・緊急時対応が「実行可能か」を確認。',
-        'Red：不成立。代替支援（家族/訪問看護/地域連携など）で改善余地があるか検討。'
-      ],
-      howShort: [
-        '同居/通院手段/服薬管理/緊急連絡をチェック。'
-      ],
-      howFull: [
-        '“誰が・いつ・何を”支援するか（責任者）を明文化。遠方/独居は特に要注意。'
-      ]
-    }
-  };
-
-  function helpDetails(title){
-    const d = domainHelp[title];
-    if(!d) return '';
-    const li = arr => (arr||[]).map(x=>`<li>${x}</li>`).join('');
-    return `
-      <details style="margin-top:10px;">
-        <summary>判定/測定ガイド（クリックで開く）</summary>
-        <div class="helpgrid">
-          <div class="helpsec">
-            <div class="helpTitle">判定ロジック（短縮版）</div>
-            <ul>${li(d.logicShort)}</ul>
-            <details style="margin-top:8px;">
-              <summary>完全版を開く</summary>
-              <ul>${li(d.logicFull)}</ul>
-            </details>
-          </div>
-          <div class="helpsec">
-            <div class="helpTitle">How to measure（短縮版）</div>
-            <ul>${li(d.howShort)}</ul>
-            <details style="margin-top:8px;">
-              <summary>完全版を開く</summary>
-              <ul>${li(d.howFull)}</ul>
-            </details>
-          </div>
-        </div>
-      </details>`;
-  }
 
   function evaluate(){
     const sex = el('sex').value || null;
@@ -490,13 +507,14 @@
       support==='ok'
     );
 
+    // Safety: Redは即Red。それ以外で未入力があればOverallは「保留」。
     if(red.length>0) overall='Red';
+    else if(missing.length>0) overall='保留';
     else if(greenOk) overall='Green';
-    else if(missing.length>0 && unmet.length===0) overall='—';
     else overall='Yellow';
 
     if(overall==='Yellow'){
-      // Yellow-2w vs 4w
+      // Yellow-2w vs 4w (simple rule)
       const mild = (
         katz===6 && (mc!=null && mc>=3) && support==='ok' &&
         ((physFails.length===1 && (mna==null || mna>=12)) || (mna!=null && mna>=8 && mna<=11 && physFails.length===0))
@@ -529,12 +547,12 @@
     // Overall
     dotSet('dotOverall', ev.overall==='Green'?'good':ev.overall==='Yellow'?'warn':ev.overall==='Red'?'bad':'na');
     el('overall').textContent = ev.overall;
-    el('yellowPlan').textContent = (ev.overall==='Yellow') ? ev.yellowPlan : (ev.overall==='Green' ? 'Gate B Green' : (ev.overall==='Red' ? 'Gate B Red' : '入力待ち'));
+    el('yellowPlan').textContent = (ev.overall==='Yellow') ? ev.yellowPlan : (ev.overall==='Green' ? 'Gate B Green' : (ev.overall==='Red' ? 'Gate B Red' : (ev.overall==='保留' ? '未入力あり（保留）' : '入力待ち')));
 
     dotSet('dotRisk', ev.red.length>0?'bad':'na');
     el('redCount').textContent = String(ev.red.length);
 
-    // Domain cards
+    // Domain cards (clean: no per-card how-to)
     const cards = [
       {name:'ADL', dot: (ev.levels.katzLevel==='bad'||ev.levels.lawtonLevel==='bad')?'bad':((ev.levels.katzLevel&&ev.levels.lawtonLevel)?((ev.levels.katzLevel==='good'&&ev.levels.lawtonLevel==='good')?'good':'warn'):null),
        sub: (ev.inputs.katz==null||ev.inputs.lawton==null)?'未入力':`Katz ${ev.inputs.katz}/6, Lawton ${ev.inputs.lawton}/8`},
@@ -552,12 +570,9 @@
       <div class="score">
         <div class="top">
           <div class="name">${c.name}</div>
-          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:flex-end;">
-            <span class="pill"><span class="dot ${levelDot(c.dot)}"></span><span>${c.dot? (c.dot==='good'?'合格':c.dot==='warn'?'要注意':'不合格'):'未入力'}</span></span>
-          </div>
+          <span class="pill"><span class="dot ${levelDot(c.dot)}"></span><span>${c.dot? (c.dot==='good'?'合格':c.dot==='warn'?'要注意':'不合格'):'未入力'}</span></span>
         </div>
         <div class="sub">${c.sub}</div>
-        ${helpDetails(c.name)}
       </div>
     `).join('');
 
@@ -635,20 +650,61 @@
   el('demoRed').addEventListener('click', ()=>setDemo('Red'));
   el('reset').addEventListener('click', resetAll);
 
+  // How-to tabs
+  function setHowTab(which){
+    const shortBtn = el('howShortBtn');
+    const fullBtn = el('howFullBtn');
+    const shortBox = el('howShort');
+    const fullBox = el('howFull');
+    const isShort = which==='short';
+    shortBtn.classList.toggle('active', isShort);
+    fullBtn.classList.toggle('active', !isShort);
+    shortBtn.setAttribute('aria-selected', isShort ? 'true' : 'false');
+    fullBtn.setAttribute('aria-selected', !isShort ? 'true' : 'false');
+    shortBox.style.display = isShort ? 'block' : 'none';
+    fullBox.style.display = !isShort ? 'block' : 'none';
+  }
+  el('howShortBtn').addEventListener('click', ()=>setHowTab('short'));
+  el('howFullBtn').addEventListener('click', ()=>setHowTab('full'));
 
-  // 表示モード（自動/PC/スマホ）：基本はレスポンシブ自動切替。必要に応じてテスト用に強制できます。
+  // Logic modal + tabs
+  const modal = el('logicModal');
+  function openModal(){ modal.classList.add('open'); }
+  function closeModal(){ modal.classList.remove('open'); }
+  el('openLogic').addEventListener('click', openModal);
+  el('closeLogic').addEventListener('click', closeModal);
+  modal.addEventListener('click', (e)=>{ if(e.target===modal) closeModal(); });
+  window.addEventListener('keydown', (e)=>{ if(e.key==='Escape') closeModal(); });
+
+  function setLogicTab(which){
+    const shortBtn = el('logicShortBtn');
+    const fullBtn = el('logicFullBtn');
+    const shortBox = el('logicShort');
+    const fullBox = el('logicFull');
+    const isShort = which==='short';
+    shortBtn.classList.toggle('active', isShort);
+    fullBtn.classList.toggle('active', !isShort);
+    shortBtn.setAttribute('aria-selected', isShort ? 'true' : 'false');
+    fullBtn.setAttribute('aria-selected', !isShort ? 'true' : 'false');
+    shortBox.style.display = isShort ? 'grid' : 'none';
+    fullBox.style.display = !isShort ? 'block' : 'none';
+  }
+  el('logicShortBtn').addEventListener('click', ()=>setLogicTab('short'));
+  el('logicFullBtn').addEventListener('click', ()=>setLogicTab('full'));
+
+  // Mode toggle
   function setMode(mode){
-    document.body.dataset.mode = mode;
-    ['modeAuto','modePC','modeMobile'].forEach(id=>{const b=el(id); if(!b) return; b.classList.remove('active');});
-    if(mode==='auto'){delete document.body.dataset.mode; el('modeAuto').classList.add('active');}
-    if(mode==='pc'){el('modePC').classList.add('active');}
-    if(mode==='mobile'){el('modeMobile').classList.add('active');}
+    if(mode==='auto') document.body.removeAttribute('data-mode');
+    else document.body.setAttribute('data-mode', mode);
+    el('modeAuto').classList.toggle('active', mode==='auto');
+    el('modePC').classList.toggle('active', mode==='desktop');
+    el('modeSP').classList.toggle('active', mode==='mobile');
   }
   el('modeAuto').addEventListener('click', ()=>setMode('auto'));
-  el('modePC').addEventListener('click', ()=>setMode('pc'));
-  el('modeMobile').addEventListener('click', ()=>setMode('mobile'));
-  setMode('auto');
+  el('modePC').addEventListener('click', ()=>setMode('desktop'));
+  el('modeSP').addEventListener('click', ()=>setMode('mobile'));
 
+  // initial
   render();
 </script>
 </body>
